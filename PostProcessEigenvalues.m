@@ -1,15 +1,20 @@
-%%
+%% Define low fidelity sparse grid
 S = smolyak_grid_quick_preset(6,3);
 Sr = reduce_sparse_grid(S);
 
+% Write to file
+%writematrix(Sr.knots, "knotsTest.txt",'')
+
+%% Load LoFi eigenvalue data
 params = readmatrix("params.txt");
 %bmkeigs = readmatrix("bmkeigs.txt");
 scfeigs = readmatrix("scfeigs.txt");
 
-
+% Define a high fidelity grid to interpolate onto
 Shifi = smolyak_grid_quick_preset(6,6);
 Shifi_r = reduce_sparse_grid(Shifi);
 
+% Interpolate to hifi grid
 hifi_data = interpolate_on_sparse_grid(S,Sr,scfeigs.',Shifi_r.knots);
 hifi_params = interpolate_on_sparse_grid(S,Sr,params.',Shifi_r.knots);
 
@@ -19,13 +24,15 @@ eig_diff_ratio = eig_diffs(2,:)./eig_diffs(1,:);
 
 costfn = (eig_diff_ratio - 10).^2;
 
+% Find discrete indices that minimise costfn
 [minValues,minIndices] = mink(costfn,20);
 
+% Save out parameters
 minParams = hifi_params(:,minIndices);
-
 writematrix(minParams,'factor10.txt','Delimiter','space');
 
-%% Plot a realisation
+%% Plot a realisation of the surrogate
+
 minA = min(params(:,1));
 maxA = max(params(:,1));
 minR = min(params(:,4));
